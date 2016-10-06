@@ -1,0 +1,4 @@
+Pokrenuti Web Server za Chrome
+Za odredišnu mapu postaviti mapu "Viz"
+Pokrenuti URL Web Server-a
+Odabrati datoteku index.html

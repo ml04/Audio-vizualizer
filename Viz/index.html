@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="mystyle.css">
+	<title>Audio Visualizer</title>
+</head>
+<body>
+
+	<audio id="player" src="Jethro Tull - Locomotive Breath.mp3"></audio>
+
+	
+	
+	<br>
+	
+
+	<script src="bar.js"></script>
+
+	<div id="sve">
+
+	<h1 id="naslov">
+		Audio Visualizer
+	</h1>
+	
+	<div id="skripta">
+	<script>
+		
+		//stvaranje elementa za upravljanje zvučnom datotekom
+		var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+		var audioElement = document.getElementById('player');
+		var audioSrc = audioCtx.createMediaElementSource(audioElement);
+		var analyser = audioCtx.createAnalyser();
+
+		//minimalna i maksimalna vrijednost gain-a
+    	analyser.minDecibels = -90;
+		analyser.maxDecibels = -10;
+
+
+    	var frequencyData = new Uint8Array(128);
+
+		audioSrc.connect(analyser);
+		audioSrc.connect(audioCtx.destination);
+
+		//var frequencyData = new Uint8Array(bufferLength);
+
+		
+
+		var margin = {top: 10, right: 40, bottom: 40, left: 75};
+		var svgHeight = 510;
+		var svgWidth = 1200;
+		var barPadding = 1;
+
+		var x = d3.scale.linear()
+			.domain ([0, 22016])   //22016
+			.range([0, svgWidth]);
+
+		var y = d3.scale.linear()
+			.domain([-90, -10])
+			.range([svgHeight, 0]);
+
+		//x os
+		var xAxis = d3.svg.axis()
+			.scale(x)
+			.orient('bottom')
+			.tickValues([100, 1000, 5000, 10000, 15000, 20000]);
+
+		// y os
+		var yAxis = d3.svg.axis()
+			.scale(y)
+			.orient('left')
+			.ticks(9);
+
+		function make_y_axis() {
+			  return d3.svg.axis()
+			      .scale(y)
+			      .orient("left")
+			      .ticks(9);
+			}
+
+		//kreiranje SVG elementa
+
+		var svg = d3.select('#skripta')
+		  		.append('svg')
+		  		.attr('height', svgHeight + margin.top + margin.bottom)
+		  		.attr('width', svgWidth + margin.left + margin.right)
+		  		.style('background-color', '#fffffff')
+		  		.append("g")
+ 				.attr("transform", "translate(" + margin.left + "," +
+					margin.top + ")");
+
+		
+		//stvaranje vodoravnih linija na grafu
+		svg.append("g")            
+	        .attr("class", "grid")
+	        .call(make_y_axis()
+	            .tickSize(-svgWidth, 0, 0)
+	            .tickFormat("")
+	        )
+
+	    svg.append('g')
+	    	.attr('class', 'x axis')
+	    	.attr('transform', "translate(0," + svgHeight + ")")
+	    	.call(xAxis)
+	    	
+	    //oznake na x osi
+	    svg.append("text")
+			 .attr("x", (svgWidth - 70))
+			 .attr("y", (svgHeight + (margin.bottom / 2)))
+			 .attr("dy", "1em")
+			 .style("text-anchor", "right")
+			 .style("fill", "red")
+			 .style("font-size", "16px")
+			 .style("font-weight", "bold")
+			 .text("Frequency (Hz)");
+
+
+		//oznake na y osi
+		svg.append('g')
+			.attr('class', 'y axis')
+			.call(yAxis)
+			.append('text')
+			.attr('transform', 'rotate(-90)')
+			.attr('y', 0 - margin.left )
+			.attr('x', 0 - (svgHeight/2))
+			.attr('dy', '2em')
+			.style('text-anchor', 'middle')
+			.style("fill", "red")
+			.style("font-size", "16px")
+			.style("font-weight", "bold")
+			.text('Gain(dB)');
+
+		//Kreiranje  stupčastog grafa
+		svg.selectAll('rect')
+		   .data(frequencyData)
+		   .enter()
+		   .append('rect')
+		   .attr('x', function (d, i) {
+		      return (i) * (svgWidth / frequencyData.length);})
+		   .attr('width', svgWidth / frequencyData.length - barPadding);
+
+
+		//Kopiranje frekvencije u polje i osvježavanje grafa prema novim podacima
+		function streamMusic(){
+			requestAnimationFrame(streamMusic);
+
+			analyser.getByteFrequencyData(frequencyData);
+
+			svg.selectAll('rect')
+				.data(frequencyData)
+				.attr('y', function (d) {return svgHeight - d*2;})
+				.attr('height', function (d) {return d*2;})
+				.attr('fill', function(d) {return 'rgb('+ (d ) + ', 0, 0)'});
+		}
+
+		streamMusic();
+
+	</script>
+	</div>
+		
+	<div id="music_player">
+		
+		<h2 id="naslov_mali">
+			Song Player
+		</h2>
+		<br>
+		<button onclick="document.getElementById('player').play()" id="gumb">Play</button>
+		<button onclick="document.getElementById('player').pause()" id="gumb">Pause</button>
+		<div class="hp_slide">
+    	 	<div class="hp_range"></div>
+		</div>
+	</div>
+
+	</div>
+
+</body>
+</html>
